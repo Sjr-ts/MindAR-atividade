@@ -3,62 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MindAR - ToyCar AR</title>
+    <title>MindAR - Projeto 3 Targets AR</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-      }
-      #status {
-        position: fixed;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.6);
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 8px;
-        font-size: 14px;
-        z-index: 10;
-      }
-
-      #controls {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 10px;
-        z-index: 10;
-      }
-
-      button {
-        background: #333;
-        color: white;
-        border: none;
-        padding: 10px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.3s;
-      }
-
-      button:hover {
-        background: #555;
-      }
+      /* Estilos para o status e controles */
+      body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+      #status { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.6); color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 14px; z-index: 10; }
+      #controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 10; }
+      button { background: #333; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.3s; }
+      button:hover { background: #555; }
     </style>
   </head>
 
   <body>
-    <div id="status">Aponte a câmera para o target3.png</div>
+    <div id="status">Aponte a câmera para um dos Targets (1, 2 ou 3).</div>
 
     <div id="controls">
-      <button id="btnScale">Aumentar Tamanho</button>
-      <button id="btnSpeed">Aumentar Velocidade</button>
-      <button id="btnStop">Parar Giro</button>
+      <button id="btnScale">Aumentar Tamanho (Target 1)</button>
+      <button id="btnSpeed">Aumentar Velocidade (Target 1)</button>
+      <button id="btnStop">Parar Giro (Target 1)</button>
     </div>
 
     <a-scene
@@ -68,72 +33,120 @@
       vr-mode-ui="enabled: false"
       device-orientation-permission-ui="enabled: false"
     >
-      <!-- Definição dos ativos 3D -->
       <a-assets>
-        <a-asset-item id="toyCarModel" src="file:///C:/Users/TEMP.B205-30.001/Downloads/MindAR-atividade-main/MindAR-atividade-main/modelos/ToyCar.gltf"></a-asset-item>
+        <a-asset-item id="morphModel" src="./modelos/AnimatedMorphSphere.gltf"></a-asset-item>
       </a-assets>
 
-      <!-- Luzes do ambiente -->
       <a-entity light="type: ambient; intensity: 1.5"></a-entity>
       <a-entity light="type: directional; intensity: 2" position="1 1 1"></a-entity>
-
-      <!-- Câmera -->
       <a-camera look-controls="enabled: false"></a-camera>
 
-      <!-- Modelo 3D do ToyCar com animação de rotação -->
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
+      <a-entity mindar-image-target="targetIndex: 0" id="target-0">
         <a-gltf-model
-          id="carModel"
-          src="#toyCarModel"
-          position="0 0 0.2"
-          rotation="0 45 0"
-          scale="1 1 1"
+          id="morphModel1"
+          src="#morphModel"
+          position="0 0 0.1"
+          rotation="0 0 0"
+          scale="3 3 3"
           animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
+        ></a-gltf-model>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 1" id="target-1">
+        <a-gltf-model
+          id="morphModel2"
+          src="#morphModel"
+          position="0 0 0.1"
+          rotation="90 0 0"
+          scale="2 2 2"
+          color="#FF5555"
+        ></a-gltf-model>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 2" id="target-2">
+        <a-gltf-model
+          id="morphModel3"
+          src="#morphModel"
+          position="0 0 0.1"
+          rotation="0 45 45"
+          scale="4 4 4"
+          animation="property: rotation; to: 360 0 0; loop: true; dur: 6000"
         ></a-gltf-model>
       </a-entity>
     </a-scene>
 
     <script>
       const status = document.getElementById("status");
-      const target = document.querySelector("#target");
-      const model = document.querySelector("#carModel");
+      // Elementos do Target 1 (com controles)
+      const target0 = document.querySelector("#target-0");
+      const model0 = document.querySelector("#morphModel1");
 
-      let currentScale = 1;
+      let currentScale = 3; // Escala inicial definida no HTML
       let currentSpeed = 4000;
       let spinning = true;
+      let lastFoundTarget = null;
+      
+      const targetMessages = {
+        'target-0': 'Target 1 (Controlável) reconhecido!',
+        'target-1': 'Target 2 (Modelo Vermelho) reconhecido!',
+        'target-2': 'Target 3 (Rotação Lenta) reconhecido!'
+      };
 
-      // Eventos para quando o target for encontrado ou perdido
-      target.addEventListener("targetFound", () => {
-        status.textContent = "Target reconhecido!";
-      });
-      target.addEventListener("targetLost", () => {
-        status.textContent = "Aponte novamente para o target3.png";
-      });
+      // Função para atualizar o status e habilitar/desabilitar controles
+      const updateStatusAndControls = (targetId, found) => {
+        const controls = document.getElementById("controls");
+        
+        if (found) {
+            status.textContent = targetMessages[targetId];
+            lastFoundTarget = targetId;
+            // Habilita controles apenas se for o Target 1
+            controls.style.display = (targetId === 'target-0') ? 'flex' : 'none';
+        } else if (lastFoundTarget === targetId) {
+            // Se o target que acabou de ser perdido era o último visto, limpa o status
+            status.textContent = "Target perdido. Aponte novamente.";
+            controls.style.display = 'none';
+            setTimeout(() => {
+                status.textContent = "Aponte a câmera para um dos Targets (1, 2 ou 3).";
+            }, 3000);
+        }
+      };
 
-      // Aumentar o tamanho do modelo
+      // Adiciona listeners para todos os targets
+      document.querySelectorAll('[mindar-image-target]').forEach(target => {
+          target.addEventListener("targetFound", () => updateStatusAndControls(target.id, true));
+          target.addEventListener("targetLost", () => updateStatusAndControls(target.id, false));
+      });
+      
+      // Lógica dos botões (Aplicada EXCLUSIVAMENTE ao Target 1 - #morphModel1)
+
+      // Aumentar o tamanho do modelo 1
       document.getElementById("btnScale").addEventListener("click", () => {
-        currentScale += 0.2;
-        model.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
-      });
-
-      // Aumentar a velocidade do giro
-      document.getElementById("btnSpeed").addEventListener("click", () => {
-        if (spinning) {
-          currentSpeed = Math.max(500, currentSpeed - 500); // velocidade mínima 0.5s
-          model.setAttribute("animation", `property: rotation; to: 0 360 0; loop: true; dur: ${currentSpeed}`);
+        if (lastFoundTarget === 'target-0') {
+            currentScale += 0.5;
+            model0.setAttribute("scale", `${currentScale} ${currentScale} ${currentScale}`);
         }
       });
 
-      // Parar o giro do modelo
+      // Aumentar a velocidade do giro do modelo 1
+      document.getElementById("btnSpeed").addEventListener("click", () => {
+        if (lastFoundTarget === 'target-0' && spinning) {
+          currentSpeed = Math.max(500, currentSpeed - 500);
+          model0.setAttribute("animation", `property: rotation; to: 0 360 0; loop: true; dur: ${currentSpeed}`);
+        }
+      });
+
+      // Parar/Retomar o giro do modelo 1
       document.getElementById("btnStop").addEventListener("click", () => {
-        if (spinning) {
-          model.removeAttribute("animation");
-          spinning = false;
-          document.getElementById("btnStop").innerText = "Retomar Giro";
-        } else {
-          model.setAttribute("animation", `property: rotation; to: 0 360 0; loop: true; dur: ${currentSpeed}`);
-          spinning = true;
-          document.getElementById("btnStop").innerText = "Parar Giro";
+        if (lastFoundTarget === 'target-0') {
+          if (spinning) {
+            model0.removeAttribute("animation");
+            spinning = false;
+            document.getElementById("btnStop").innerText = "Retomar Giro (Target 1)";
+          } else {
+            model0.setAttribute("animation", `property: rotation; to: 0 360 0; loop: true; dur: ${currentSpeed}`);
+            spinning = true;
+            document.getElementById("btnStop").innerText = "Parar Giro (Target 1)";
+          }
         }
       });
     </script>
